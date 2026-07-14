@@ -3,5 +3,6 @@ fastembed
 streamlit
 pypdf
 numpy
-huggingface_hub
 psutil
+huggingface_hub
+rich
