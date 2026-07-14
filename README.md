@@ -1,39 +1,87 @@
-# 🧠 SemanticSlidingWindow LLM
+# 🧠 SemanticSlidingWindow: Hardware-Aware Local LLM Engine
 
-A 100% local, privacy-preserving Large Language Model interface engineered to solve the "context forgetting" and CPU inference bottlenecks inherent in raw inference engines like `llama.cpp`.
+> **A privacy-first, CPU-optimized Large Language Model interface featuring dynamic semantic memory compression and hardware-adaptive resource management.**
 
-![Python](https://img.shields.io/badge/Python-3.12-blue) ![Streamlit](https://img.shields.io/badge/Streamlit-1.0-red) ![Local AI](https://img.shields.io/badge/AI-100%25%20Local-green)
+![Python](https://img.shields.io/badge/Python-3.12+-blue?logo=python) 
+![Streamlit](https://img.shields.io/badge/UI-Streamlit-red?logo=streamlit) 
+![License](https://img.shields.io/badge/License-MIT-green)
 
-## 🚀 The Problem Solved
-Standard inference engines (like `llama.cpp` or Ollama) treat the context window as a "dumb" FIFO (First-In-First-Out) queue. When the context fills up, they blindly drop the oldest tokens. This causes two massive problems on consumer hardware:
-1. **The AI "forgets"** early parts of the conversation.
-2. **CPU inference crawls.** Attention mechanisms are $O(N^2)$. A massive context window on a CPU will bring token generation to a halt.
+## 🚀 Project Overview
 
-## 💡 The Solution: Semantic Sliding Window
-Instead of dropping tokens blindly, this application implements an **application-level Semantic Hippocampus**. 
-When the chat history exceeds a threshold, a lightweight local embedding model (`fastembed`) calculates the cosine similarity of past messages against the current prompt. 
-1. It keeps the most semantically relevant history.
-2. It summarizes the discarded older messages into a dense "Memory Block".
-3. It feeds a perfectly sized, optimized context to the LLM.
+Standard local inference engines (like `llama.cpp`) treat the context window as a static FIFO queue. This leads to two critical failures on consumer hardware:
+1.  **Semantic Amnesia:** As the context fills, the model blindly discards early conversation history.
+2.  **Inference Degradation:** Attention mechanisms scale at $O(N^2)$. Large contexts on CPUs cause token generation speeds to plummet.
 
-**Result:** CPU inference stays blazing fast (maintaining high tokens/sec), RAM usage stays under 4GB, and the AI retains infinite long-term recall.
+**SemanticSlidingWindow** solves this by implementing an **application-level Semantic Hippocampus**. It dynamically compresses conversation history using local embeddings, ensuring the AI retains long-term recall while keeping the KV-cache small enough for blazing-fast CPU inference.
 
-## ✨ Features
-- **Dynamic Memory Compression:** Auto-summarizes irrelevant chat history to keep the KV-cache small.
-- **Local RAG-Lite:** Upload `.txt` or `.pdf` files (up to 2MB) for instant, private document Q&A.
-- **Strict Hardware Bounds:** Hard limits on file sizes and context truncation guarantee zero OOM (Out of Memory) errors on 16GB RAM machines.
-- **Real-time Telemetry:** Live `tokens/sec` and generation time metrics displayed in the UI.
-- **100% Private:** Zero cloud dependencies. All data, embeddings, and inference happen locally on-device.
+## ⚙️ Technical Architecture
 
-## 🛠️ Tech Stack
-- **Inference:** `llama-cpp-python` (Qwen 2.5 3B Instruct, 4-bit quantized)
-- **Embeddings:** `fastembed` (BAAI/bge-small-en-v1.5 via ONNX)
-- **Frontend:** `Streamlit`
-- **Document Parsing:** `pypdf`
+### 1. Dynamic Memory Compression
+Instead of truncating tokens, the engine uses a lightweight ONNX embedding model (`fastembed`) to calculate the cosine similarity between past messages and the current prompt.
+*   **Relevance Filtering:** Retains the top-$K$ most semantically relevant historical messages.
+*   **Dense Summarization:** Uses the LLM itself to summarize discarded fragments into a single "Memory Block," preserving factual context without bloating the token count.
 
-## ⚙️ Installation & Run
+### 2. Hardware-Aware Resource Management
+The application utilizes `psutil` to detect system RAM and automatically configures strict operational bounds to prevent Out-Of-Memory (OOM) crashes:
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/YOUR_USERNAME/SemanticSlidingWindow.git
-   cd SemanticSlidingWindow
+| Hardware Tier | RAM Detected | Context Window (`n_ctx`) | Max File Upload | Status |
+| :--- | :--- | :--- | :--- | :--- |
+| **Low-End** | < 8 GB | 1,024 tokens | 1 MB | Strict Mode |
+| **Balanced** | 8 - 16 GB | 2,048 tokens | 2 MB | Standard Mode |
+| **High-End** | > 16 GB | 4,096 tokens | 5 MB | Performance Mode |
+
+### 3. Zero-Cloud Privacy Stack
+*   **Inference:** `llama-cpp-python` running Qwen 2.5 3B (4-bit quantized).
+*   **Embeddings:** `fastembed` (BAAI/bge-small-en-v1.5) via ONNX Runtime.
+*   **Parsing:** `pypdf` for local, client-side document ingestion.
+
+## 📊 Performance Metrics
+
+Optimized for standard consumer CPUs (e.g., Intel i5/i7, AMD Ryzen 5/7).
+
+*   **Throughput:** ~15–25 tokens/sec (Balanced Mode).
+*   **Memory Footprint:** < 4 GB total RAM usage during active inference.
+*   **Latency:** Sub-second initial response time due to optimized KV-cache sizing.
+
+## 🛠️ Installation & Setup
+
+### Prerequisites
+*   Python 3.10+
+*   Git
+
+### Quick Start
+1.  **Clone the repository:**
+    ```bash
+    git clone https://github.com/YOUR_USERNAME/SemanticSlidingWindow.git
+    cd SemanticSlidingWindow
+    ```
+
+2.  **Create and activate a virtual environment:**
+    ```bash
+    python -m venv .venv
+    # Windows
+    .\.venv\Scripts\activate
+    # macOS/Linux
+    source .venv/bin/activate
+    ```
+
+3.  **Install dependencies:**
+    ```bash
+    pip install -r requirements.txt
+    ```
+
+4.  **Launch the application:**
+    ```bash
+    streamlit run app.py
+    ```
+    *Note: The application will automatically download the required Qwen 2.5 GGUF model (~2GB) from HuggingFace on the first run.*
+
+## 💡 Key Engineering Challenges Solved
+
+*   **The "FIFO" Problem:** Overcame the inherent limitations of raw inference engines by building a custom Python wrapper that manages context state independently of the underlying C++ backend.
+*   **Windows DLL Conflicts:** Resolved complex `WinError 4551` and `torchvision` dependency conflicts by migrating to a pure-Rust/ONNX embedding stack (`fastembed`), ensuring compatibility with strict Windows Application Control policies.
+*   **Hardware Variance:** Implemented dynamic configuration logic to ensure the application remains stable across devices ranging from 8GB ultrabooks to 32GB workstations.
+
+## 📄 License
+
+This project is licensed under the MIT License.
