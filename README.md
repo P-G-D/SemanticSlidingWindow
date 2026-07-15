@@ -18,7 +18,7 @@ Standard local inference engines (like `llama.cpp`) treat the context window as 
 
 ### 1. Dynamic Memory Compression
 Instead of truncating tokens, the engine uses a lightweight ONNX embedding model (`fastembed`) to calculate the cosine similarity between past messages and the current prompt.
-*   **Relevance Filtering:** Retains the top-$K$ most semantically relevant historical messages.
+*   **Relevance Filtering:** Retains the top-K most semantically relevant historical messages.
 *   **Dense Summarization:** Uses the LLM itself to summarize discarded fragments into a single "Memory Block," preserving factual context without bloating the token count.
 
 ### 2. Hardware-Aware Resource Management
