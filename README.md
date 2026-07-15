@@ -52,7 +52,7 @@ Optimized for standard consumer CPUs (e.g., Intel i5/i7, AMD Ryzen 5/7).
 ### Quick Start
 1.  **Clone the repository:**
     ```bash
-    git clone https://github.com/YOUR_USERNAME/SemanticSlidingWindow.git
+    git clone https://github.com/P-G-D/SemanticSlidingWindow.git
     cd SemanticSlidingWindow
     ```
 
