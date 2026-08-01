@@ -1,4 +1,4 @@
-# 🧠 SemanticSlidingWindow: Hardware-Aware Local LLM Engine
+# SemanticSlidingWindow: Hardware-Aware Local LLM Engine
 
 > **A privacy-first, CPU-optimized Large Language Model interface featuring dynamic semantic memory compression and hardware-adaptive resource management.**
 
@@ -6,7 +6,7 @@
 ![Streamlit](https://img.shields.io/badge/UI-Streamlit-red?logo=streamlit) 
 ![License](https://img.shields.io/badge/License-MIT-green)
 
-## 🚀 Project Overview
+## Project Overview
 
 Standard local inference engines (like `llama.cpp`) treat the context window as a static FIFO queue. This leads to two critical failures on consumer hardware:
 1.  **Semantic Amnesia:** As the context fills, the model blindly discards early conversation history.
@@ -14,7 +14,7 @@ Standard local inference engines (like `llama.cpp`) treat the context window as 
 
 **SemanticSlidingWindow** solves this by implementing an **application-level Semantic Hippocampus**. It dynamically compresses conversation history using local embeddings, ensuring the AI retains long-term recall while keeping the KV-cache small enough for blazing-fast CPU inference.
 
-## ⚙️ Technical Architecture
+## Technical Architecture
 
 ### 1. Dynamic Memory Compression
 Instead of truncating tokens, the engine uses a lightweight ONNX embedding model (`fastembed`) to calculate the cosine similarity between past messages and the current prompt.
@@ -35,7 +35,7 @@ The application utilizes `psutil` to detect system RAM and automatically configu
 *   **Embeddings:** `fastembed` (BAAI/bge-small-en-v1.5) via ONNX Runtime.
 *   **Parsing:** `pypdf` for local, client-side document ingestion.
 
-## 📊 Performance Metrics
+## Performance Metrics
 
 Optimized for standard consumer CPUs (e.g., Intel i5/i7, AMD Ryzen 5/7).
 
@@ -43,7 +43,7 @@ Optimized for standard consumer CPUs (e.g., Intel i5/i7, AMD Ryzen 5/7).
 *   **Memory Footprint:** < 4 GB total RAM usage during active inference.
 *   **Latency:** Sub-second initial response time due to optimized KV-cache sizing.
 
-## 🛠️ Installation & Setup
+## Installation & Setup
 
 ### Prerequisites
 *   Python 3.10+
@@ -76,12 +76,12 @@ Optimized for standard consumer CPUs (e.g., Intel i5/i7, AMD Ryzen 5/7).
     ```
     *Note: The application will automatically download the required Qwen 2.5 GGUF model (~2GB) from HuggingFace on the first run.*
 
-## 💡 Key Engineering Challenges Solved
+## Key Engineering Challenges Solved
 
 *   **The "FIFO" Problem:** Overcame the inherent limitations of raw inference engines by building a custom Python wrapper that manages context state independently of the underlying C++ backend.
 *   **Windows DLL Conflicts:** Resolved complex `WinError 4551` and `torchvision` dependency conflicts by migrating to a pure-Rust/ONNX embedding stack (`fastembed`), ensuring compatibility with strict Windows Application Control policies.
 *   **Hardware Variance:** Implemented dynamic configuration logic to ensure the application remains stable across devices ranging from 8GB ultrabooks to 32GB workstations.
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License.
